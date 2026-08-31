@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: aquasize-ai
+    runtime: static
+    buildCommand: ""
+    staticPublishPath: ./web
+    pullRequestPreviewsEnabled: false
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

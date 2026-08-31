@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AquaSize AI — Reef Fish Identifier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --deep:#065091; --deep-dark:#043b6b; --light:#88abd4; --white:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:'Poppins','Segoe UI',system-ui,-apple-system,sans-serif;
+    background:
+      linear-gradient(160deg, rgba(6,80,145,.55) 0%, rgba(4,59,107,.75) 100%),
+      url('background.jpg') center/cover no-repeat fixed;
+    color:var(--white); min-height:100vh;
+  }
+  header{ padding:36px 24px 18px; text-align:center; }
+  header h1{ margin:0 0 6px; font-size:2.1rem; font-weight:600; letter-spacing:.3px; }
+  header h1 span{ color:var(--light); font-weight:700; }
+  header p{ color:rgba(255,255,255,.85); max-width:640px; margin:0 auto; line-height:1.6; font-size:.95rem; font-weight:400;}
+  .badge-row{ display:flex; gap:10px; justify-content:center; margin-top:14px; flex-wrap:wrap;}
+  .badge{ background:rgba(136,171,212,.15); border:1px solid rgba(136,171,212,.4); color:var(--light);
+    padding:5px 12px; border-radius:20px; font-size:.78rem; font-weight:500; }
+
+  main{ max-width:980px; margin:0 auto; padding:10px 20px 60px; display:grid; gap:22px; }
+
+  .panel{ background:var(--white); color:var(--deep); border:1px solid rgba(136,171,212,.3);
+    border-radius:16px; padding:22px; box-shadow:0 12px 30px rgba(4,40,75,.25); }
+
+  .drop{ border:2px dashed rgba(6,80,145,.35); border-radius:14px; padding:34px 18px;
+    text-align:center; cursor:pointer; transition:.2s; }
+  .drop:hover, .drop.drag{ border-color:var(--deep); background:rgba(136,171,212,.12); }
+  .drop input{ display:none; }
+  .drop .icon{ margin-bottom:8px; }
+  .drop .icon img{ width:110px; height:auto; }
+  .drop .sub{ color:rgba(6,80,145,.55); font-size:.85rem; margin-top:6px; }
+
+  .samples{ margin-top:18px; }
+  .samples h3{ font-size:.85rem; text-transform:uppercase; letter-spacing:1px; color:rgba(6,80,145,.55); margin:0 0 10px; font-weight:600;}
+  .sample-row{ display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; }
+  .sample-row img{ width:78px; height:58px; object-fit:cover; border-radius:8px; cursor:pointer;
+    border:2px solid transparent; opacity:.85; transition:.15s; flex-shrink:0;}
+  .sample-row img:hover{ opacity:1; border-color:var(--deep); transform:translateY(-2px);}
+
+  .result-grid{ display:grid; grid-template-columns: 1.1fr .9fr; gap:20px; }
+  @media (max-width:760px){ .result-grid{ grid-template-columns:1fr; } }
+
+  .imgwrap{ position:relative; border-radius:12px; overflow:hidden; background:var(--deep-dark); min-height:220px;
+    display:flex; align-items:center; justify-content:center; }
+  .imgwrap canvas, .imgwrap img{ max-width:100%; display:block; }
+
+  .preds{ display:flex; flex-direction:column; gap:10px; }
+  .pred{ display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:rgba(136,171,212,.12); border-radius:10px; padding:10px 14px; border-left:4px solid var(--deep); }
+  .pred .cls{ font-weight:600; font-size:.95rem; color:var(--deep); }
+  .pred .conf{ font-family:'Poppins',monospace; color:var(--deep); font-weight:700; }
+  .pred.low{ border-left-color:var(--light); }
+  .pred .conf.low{ color:var(--light); font-weight:700; }
+  .bar{ height:5px; background:rgba(6,80,145,.08); border-radius:3px; margin-top:6px; overflow:hidden; }
+  .bar > div{ height:100%; background:linear-gradient(90deg,var(--light),var(--deep)); }
+
+  .status{ font-size:.85rem; color:rgba(6,80,145,.65); min-height:20px; }
+  .status.err{ color:var(--deep); font-weight:700; }
+
+  .btnrow{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+  button{ background:var(--deep); color:var(--white); border:none; padding:10px 18px; border-radius:8px;
+    font-weight:600; cursor:pointer; font-size:.88rem; font-family:'Poppins','Segoe UI',sans-serif; }
+  button:hover:not(:disabled){ background:var(--deep-dark); }
+  button.ghost{ background:transparent; border:1.5px solid var(--deep); color:var(--deep); }
+  button.ghost:hover{ background:rgba(6,80,145,.08); }
+  button:disabled{ opacity:.45; cursor:not-allowed; }
+
+  .empty{ color:rgba(6,80,145,.5); text-align:center; padding:30px; font-size:.9rem; }
+
+  footer{ text-align:center; color:rgba(255,255,255,.65); font-size:.78rem; padding:20px; line-height:1.7; }
+  footer a{ color:var(--light); }
+
+  .class-table{ width:100%; border-collapse:collapse; margin-top:6px; font-size:.82rem;}
+  .class-table td, .class-table th{ padding:5px 8px; text-align:left; border-bottom:1px solid rgba(6,80,145,.12);}
+  .class-table th{ color:rgba(6,80,145,.6); font-weight:600; }
+  .pill{ display:inline-block; padding:1px 8px; border-radius:10px; font-size:.72rem; font-weight:700;}
+  .pill.hi{ background:var(--deep); color:var(--white);}
+  .pill.mid{ background:var(--light); color:var(--deep);}
+  .pill.lo{ background:var(--white); border:1.5px solid var(--deep); color:var(--deep);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AquaSize <span>AI</span></h1>
+  <p>Upload a photo of a reef fish and this tool draws a box around it and identifies its
+  family — Acanthuridae, Scombridae, Scaridae, Shark, Carangidae, Serranidae, or Lutjanidae —
+  using a computer vision model trained on real reef photos, with a confidence score for
+  each prediction.</p>
+  <div class="badge-row">
+    <span class="badge" id="badge-acc">Loading model stats…</span>
+    <span class="badge">7 reef-fish families</span>
+    <span class="badge">Roboflow-hosted inference</span>
+  </div>
+</header>
+
+<main>
+
+  <section class="panel">
+    <div class="drop" id="drop">
+      <div class="icon"><img src="whale-icon.png" alt="" /></div>
+      <div><strong>Drop a fish photo here</strong> or click to choose a file</div>
+      <div class="sub">JPG/PNG · works best with one clear fish per photo</div>
+      <input type="file" id="fileInput" accept="image/*" />
+    </div>
+
+    <div class="samples">
+      <h3>Or try a sample from the real held-out test set</h3>
+      <div class="sample-row" id="sampleRow"><!-- filled by JS --></div>
+    </div>
+
+    <div class="btnrow">
+      <button id="classifyBtn" disabled>Identify fish</button>
+      <button class="ghost" id="resetBtn">Reset</button>
+    </div>
+    <div class="status" id="status"></div>
+  </section>
+
+  <section class="panel result-grid" id="resultPanel" style="display:none;">
+    <div class="imgwrap"><canvas id="canvas"></canvas></div>
+    <div>
+      <h3 style="margin-top:0;">Detections</h3>
+      <div class="preds" id="preds"><div class="empty">No detections yet.</div></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h3 style="margin-top:0;">Model performance (full 68-image held-out test split)</h3>
+    <table class="class-table">
+      <thead><tr><th>Family</th><th>Recall</th><th>Notes</th></tr></thead>
+      <tbody id="statsBody"></tbody>
+    </table>
+    <p style="color:var(--muted); font-size:.82rem; margin-bottom:0;">
+      Numbers are from a real, complete evaluation of every image in the test split — not a
+      cherry-picked sample. Full methodology and confusion matrix in the project's
+      <code>docs/results.md</code>.
+    </p>
+  </section>
+
+</main>
+
+<footer>
+  Built on a Roboflow-hosted YOLO model, fine-tuned on a forked reef-fish dataset.<br/>
+  Predictions run client-side against Roboflow's inference API using a public, browser-safe key.
+</footer>
+
+<script>
+// ---- Configuration -------------------------------------------------------
+const API_KEY   = "rf_PyW41AdkpNTRRRGLIaZYKiwvDKp1"; // publishable (browser-safe) key
+const MODEL_ID  = "ouma-aboubaker-s-workspace/fish-identification-fw0uo-wyizm-1-yolo11n-t2";
+const CONFIDENCE = 0.05;
+const INFER_URL = `https://detect.roboflow.com/${MODEL_ID}?api_key=${API_KEY}&confidence=${CONFIDENCE}`;
+
+// Real held-out test-split images (hosted on Roboflow) usable as one-click samples
+const SAMPLES = [
+  {url:"https://source.roboflow.com/PyW41AdkpNTRRRGLIaZYKiwvDKp1/Igtk2WJ69TOevIaQSSGL/original.jpg", label:"Shark"},
+  {url:"https://source.roboflow.com/PyW41AdkpNTRRRGLIaZYKiwvDKp1/D4QoAePywuqpadeqiCgx/original.jpg", label:"Acanthuridae"},
+  {url:"https://source.roboflow.com/PyW41AdkpNTRRRGLIaZYKiwvDKp1/WXLSsMhxVIxezjM5IARJ/original.jpg", label:"Scombridae"},
+  {url:"https://source.roboflow.com/PyW41AdkpNTRRRGLIaZYKiwvDKp1/yhNlkW2rJmR6QSiKRVLE/original.jpg", label:"Serranidae"},
+  {url:"https://source.roboflow.com/PyW41AdkpNTRRRGLIaZYKiwvDKp1/bqmxCkbbaQjWXIPUnmql/original.jpg", label:"Lutjanidae"},
+];
+
+// Real per-class recall from the full 68-image evaluation (docs/results.md)
+const STATS = [
+  {cls:"Acanthuridae (Surgeonfish)", recall:100, note:"Best-represented class; model's default guess under uncertainty"},
+  {cls:"Scombridae (Tunas)", recall:90, note:"Strong performance"},
+  {cls:"Scaridae (Parrotfish)", recall:86, note:"Strong performance"},
+  {cls:"Shark", recall:80, note:"Strong performance"},
+  {cls:"Carangidae (Jacks)", recall:78, note:"Solid, occasional Scaridae/Scombridae confusion"},
+  {cls:"Serranidae (Groupers)", recall:60, note:"Weak — pose variability (open-mouth shots) suspected"},
+  {cls:"Lutjanidae (Snappers)", recall:33, note:"Weakest — heavy schooling/occlusion in training images"},
+];
+
+// ---- UI wiring -------------------------------------------------------
+const drop = document.getElementById('drop');
+const fileInput = document.getElementById('fileInput');
+const classifyBtn = document.getElementById('classifyBtn');
+const resetBtn = document.getElementById('resetBtn');
+const statusEl = document.getElementById('status');
+const resultPanel = document.getElementById('resultPanel');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const predsEl = document.getElementById('preds');
+const sampleRow = document.getElementById('sampleRow');
+const statsBody = document.getElementById('statsBody');
+const badgeAcc = document.getElementById('badge-acc');
+
+let currentImage = null; // HTMLImageElement currently loaded
+
+badgeAcc.textContent = "76% top-1 accuracy (full 68-image test split)";
+
+STATS.forEach(s=>{
+  const tr = document.createElement('tr');
+  const pillClass = s.recall>=70 ? 'hi' : (s.recall>=50 ? 'mid' : 'lo');
+  tr.innerHTML = `<td>${s.cls}</td><td><span class="pill ${pillClass}">${s.recall}%</span></td><td style="color:var(--muted)">${s.note}</td>`;
+  statsBody.appendChild(tr);
+});
+
+SAMPLES.forEach(s=>{
+  const img = document.createElement('img');
+  img.src = s.url;
+  img.title = s.label + " (click to test)";
+  img.addEventListener('click', ()=> loadFromUrl(s.url));
+  sampleRow.appendChild(img);
+});
+
+drop.addEventListener('click', ()=> fileInput.click());
+drop.addEventListener('dragover', e=>{ e.preventDefault(); drop.classList.add('drag'); });
+drop.addEventListener('dragleave', ()=> drop.classList.remove('drag'));
+drop.addEventListener('drop', e=>{
+  e.preventDefault(); drop.classList.remove('drag');
+  if(e.dataTransfer.files && e.dataTransfer.files[0]) loadFromFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e=>{
+  if(e.target.files && e.target.files[0]) loadFromFile(e.target.files[0]);
+});
+resetBtn.addEventListener('click', ()=>{
+  currentImage = null; classifyBtn.disabled = true; statusEl.textContent = '';
+  statusEl.classList.remove('err');
+  resultPanel.style.display = 'none';
+  fileInput.value = '';
+});
+
+function loadFromFile(file){
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => { currentImage = img; onImageReady(); };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function loadFromUrl(url){
+  statusEl.textContent = 'Loading sample image…';
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.onload = () => { currentImage = img; onImageReady(); statusEl.textContent = ''; };
+  img.onerror = () => { statusEl.textContent = 'Could not load sample image.'; statusEl.classList.add('err'); };
+  img.src = url;
+}
+
+function onImageReady(){
+  classifyBtn.disabled = false;
+  drawBase(currentImage);
+  resultPanel.style.display = 'grid';
+  predsEl.innerHTML = '<div class="empty">Click "Identify fish" to run the model.</div>';
+}
+
+function drawBase(img){
+  const maxW = 640;
+  const scale = Math.min(1, maxW / img.naturalWidth);
+  canvas.width = img.naturalWidth * scale;
+  canvas.height = img.naturalHeight * scale;
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  canvas._scale = scale;
+}
+
+classifyBtn.addEventListener('click', async ()=>{
+  if(!currentImage) return;
+  classifyBtn.disabled = true;
+  statusEl.classList.remove('err');
+  statusEl.textContent = 'Running inference…';
+  try{
+    const base64 = imageToBase64(currentImage);
+    const res = await fetch(INFER_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'application/x-www-form-urlencoded'},
+      body: base64
+    });
+    if(!res.ok) throw new Error(`Inference API returned ${res.status}`);
+    const data = await res.json();
+    renderPredictions(data.predictions || []);
+    statusEl.textContent = `Done — ${ (data.predictions||[]).length } detection(s).`;
+  }catch(err){
+    statusEl.textContent = 'Error: ' + err.message + ' (the model endpoint may be warming up — try again in a few seconds)';
+    statusEl.classList.add('err');
+  }finally{
+    classifyBtn.disabled = false;
+  }
+});
+
+function imageToBase64(img){
+  const c = document.createElement('canvas');
+  const maxW = 1024;
+  const scale = Math.min(1, maxW / img.naturalWidth);
+  c.width = img.naturalWidth * scale;
+  c.height = img.naturalHeight * scale;
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.85).split(',')[1];
+}
+
+function renderPredictions(predictions){
+  drawBase(currentImage);
+  const scale = canvas._scale;
+  predsEl.innerHTML = '';
+  if(predictions.length === 0){
+    predsEl.innerHTML = '<div class="empty">No fish detected at this confidence threshold.</div>';
+    return;
+  }
+  predictions.sort((a,b)=> b.confidence - a.confidence);
+  predictions.forEach(p=>{
+    const x = (p.x - p.width/2) * scale;
+    const y = (p.y - p.height/2) * scale;
+    const w = p.width * scale, h = p.height * scale;
+    const low = p.confidence < 0.4;
+    ctx.strokeStyle = low ? '#facc15' : '#2dd4bf';
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(x, y, w, h);
+    ctx.fillStyle = low ? '#facc15' : '#2dd4bf';
+    ctx.font = '13px Segoe UI, sans-serif';
+    const label = `${p.class} ${(p.confidence*100).toFixed(0)}%`;
+    const tw = ctx.measureText(label).width + 10;
+    ctx.fillRect(x, Math.max(0,y-18), tw, 18);
+    ctx.fillStyle = '#022';
+    ctx.fillText(label, x+5, Math.max(12,y-5));
+
+    const row = document.createElement('div');
+    row.className = 'pred' + (low ? ' low' : '');
+    row.innerHTML = `
+      <div>
+        <div class="cls">${p.class}</div>
+        <div class="bar"><div style="width:${(p.confidence*100).toFixed(0)}%"></div></div>
+      </div>
+      <div class="conf ${low?'low':''}">${(p.confidence*100).toFixed(1)}%</div>`;
+    predsEl.appendChild(row);
+  });
+}
+</script>
+</body>
+</html>
