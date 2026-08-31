@@ -12,8 +12,9 @@
     --deep:#065091; --deep-dark:#043b6b; --light:#88abd4; --white:#ffffff;
   }
   *{box-sizing:border-box;}
+  html{ overflow-x:hidden; }
   body{
-    margin:0; font-family:'Poppins','Segoe UI',system-ui,-apple-system,sans-serif;
+    margin:0; overflow-x:hidden; font-family:'Poppins','Segoe UI',system-ui,-apple-system,sans-serif;
     background:
       linear-gradient(160deg, rgba(6,80,145,.55) 0%, rgba(4,59,107,.75) 100%),
       url('background.jpg') center/cover no-repeat fixed;
@@ -80,13 +81,41 @@
   footer{ text-align:center; color:rgba(255,255,255,.65); font-size:.78rem; padding:20px; line-height:1.7; }
   footer a{ color:var(--light); }
 
-  .class-table{ width:100%; border-collapse:collapse; margin-top:6px; font-size:.82rem;}
+  .table-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .class-table{ width:100%; min-width:480px; border-collapse:collapse; margin-top:6px; font-size:.82rem;}
   .class-table td, .class-table th{ padding:5px 8px; text-align:left; border-bottom:1px solid rgba(6,80,145,.12);}
   .class-table th{ color:rgba(6,80,145,.6); font-weight:600; }
   .pill{ display:inline-block; padding:1px 8px; border-radius:10px; font-size:.72rem; font-weight:700;}
   .pill.hi{ background:var(--deep); color:var(--white);}
   .pill.mid{ background:var(--light); color:var(--deep);}
   .pill.lo{ background:var(--white); border:1.5px solid var(--deep); color:var(--deep);}
+
+  /* ---- Mobile ---- */
+  @media (max-width:640px){
+    header{ padding:26px 16px 12px; }
+    header h1{ font-size:1.55rem; }
+    header p{ font-size:.85rem; line-height:1.55; }
+    .badge-row{ gap:6px; margin-top:12px; }
+    .badge{ font-size:.68rem; padding:4px 10px; }
+
+    main{ padding:8px 12px 40px; gap:16px; }
+    .panel{ padding:16px; border-radius:14px; }
+
+    .drop{ padding:22px 10px; }
+    .drop .icon img{ width:72px; }
+    .drop .sub{ font-size:.78rem; }
+
+    .samples h3{ font-size:.75rem; }
+    .sample-row img{ width:64px; height:48px; }
+
+    .btnrow{ flex-direction:column; }
+    .btnrow button{ width:100%; }
+
+    .imgwrap{ min-height:160px; }
+    .pred{ padding:8px 10px; }
+
+    .class-table{ font-size:.76rem; }
+  }
 </style>
 </head>
 <body>
@@ -94,7 +123,7 @@
 <header>
   <h1>AquaSize <span>AI</span></h1>
   <p>Upload a photo of a reef fish and this tool draws a box around it and identifies its
-  family — Acanthuridae, Scombridae, Scaridae, Shark, Carangidae, Serranidae, or Lutjanidae —
+  family (Acanthuridae, Scombridae, Scaridae, Shark, Carangidae, Serranidae, or Lutjanidae)
   using a computer vision model trained on real reef photos, with a confidence score for
   each prediction.</p>
   <div class="badge-row">
@@ -136,10 +165,12 @@
 
   <section class="panel">
     <h3 style="margin-top:0;">Model performance (full 68-image held-out test split)</h3>
-    <table class="class-table">
-      <thead><tr><th>Family</th><th>Recall</th><th>Notes</th></tr></thead>
-      <tbody id="statsBody"></tbody>
-    </table>
+    <div class="table-scroll">
+      <table class="class-table">
+        <thead><tr><th>Family</th><th>Recall</th><th>Notes</th></tr></thead>
+        <tbody id="statsBody"></tbody>
+      </table>
+    </div>
     <p style="color:var(--muted); font-size:.82rem; margin-bottom:0;">
       Numbers are from a real, complete evaluation of every image in the test split — not a
       cherry-picked sample. Full methodology and confusion matrix in the project's
