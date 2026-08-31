@@ -156,10 +156,11 @@
 
 <script>
 // ---- Configuration -------------------------------------------------------
-const API_KEY   = "rf_PyW41AdkpNTRRRGLIaZYKiwvDKp1"; // publishable (browser-safe) key
-const MODEL_ID  = "ouma-aboubaker-s-workspace/fish-identification-fw0uo-wyizm-1-yolo11n-t2";
+// Inference runs through this app's own /api/infer, which relays to Roboflow
+// server-side (Roboflow's hosted endpoint doesn't return CORS headers for
+// direct browser-to-browser calls from arbitrary origins).
 const CONFIDENCE = 0.05;
-const INFER_URL = `https://detect.roboflow.com/${MODEL_ID}?api_key=${API_KEY}&confidence=${CONFIDENCE}`;
+const INFER_URL = '/api/infer';
 
 // Real held-out test-split images (hosted on Roboflow) usable as one-click samples
 const SAMPLES = [
@@ -195,7 +196,8 @@ const sampleRow = document.getElementById('sampleRow');
 const statsBody = document.getElementById('statsBody');
 const badgeAcc = document.getElementById('badge-acc');
 
-let currentImage = null; // HTMLImageElement currently loaded
+let currentImage = null;    // HTMLImageElement currently loaded
+let currentImageUrl = null; // set when the image came from a sample URL (not an upload)
 
 badgeAcc.textContent = "76% top-1 accuracy (full 68-image test split)";
 
@@ -225,13 +227,14 @@ fileInput.addEventListener('change', e=>{
   if(e.target.files && e.target.files[0]) loadFromFile(e.target.files[0]);
 });
 resetBtn.addEventListener('click', ()=>{
-  currentImage = null; classifyBtn.disabled = true; statusEl.textContent = '';
+  currentImage = null; currentImageUrl = null; classifyBtn.disabled = true; statusEl.textContent = '';
   statusEl.classList.remove('err');
   resultPanel.style.display = 'none';
   fileInput.value = '';
 });
 
 function loadFromFile(file){
+  currentImageUrl = null; // uploaded file — will send as base64
   const reader = new FileReader();
   reader.onload = ev => {
     const img = new Image();
@@ -243,9 +246,8 @@ function loadFromFile(file){
 
 function loadFromUrl(url){
   statusEl.textContent = 'Loading sample image…';
-  const img = new Image();
-  img.crossOrigin = "anonymous";
-  img.onload = () => { currentImage = img; onImageReady(); statusEl.textContent = ''; };
+  const img = new Image(); // no crossOrigin: display-only, inference uses the URL server-side
+  img.onload = () => { currentImage = img; currentImageUrl = url; onImageReady(); statusEl.textContent = ''; };
   img.onerror = () => { statusEl.textContent = 'Could not load sample image.'; statusEl.classList.add('err'); };
   img.src = url;
 }
@@ -272,11 +274,13 @@ classifyBtn.addEventListener('click', async ()=>{
   statusEl.classList.remove('err');
   statusEl.textContent = 'Running inference…';
   try{
-    const base64 = imageToBase64(currentImage);
+    const payload = currentImageUrl
+      ? { imageUrl: currentImageUrl, confidence: CONFIDENCE }
+      : { image: imageToBase64(currentImage), confidence: CONFIDENCE };
     const res = await fetch(INFER_URL, {
       method: 'POST',
-      headers: {'Content-Type':'application/x-www-form-urlencoded'},
-      body: base64
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
     });
     if(!res.ok) throw new Error(`Inference API returned ${res.status}`);
     const data = await res.json();
