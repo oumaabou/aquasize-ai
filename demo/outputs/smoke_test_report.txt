@@ -1,0 +1,33 @@
+AquaSize AI -- local smoke test report
+==================================================
+
+This validates the ENGINEERING (augmentation pipeline + sizing math
++ statistics), NOT a trained species model. Real training requires
+a real dataset + GPU -- run notebooks/phase1_train_colab.ipynb on
+Google Colab for that.
+
+Stress conditions tested: 8 (baseline, harsh_sunlight, low_light_deck, oblique_angle, handheld_motion_blur, background_clutter, mobile_compression, combined_worst_case)
+-> all ran without error, saved to stress_conditions_demo.png
+
+Sizing math check (known-answer synthetic scene):
+  true length:      42.0 cm
+  estimated length: 42.0 cm
+  error:            0.0 cm (0.0%)
+  -> small nonzero error is expected: it comes from ellipse/contour
+     rasterization, exactly the kind of discretization error real
+     pixel-based sizing has. This is why Phase 2 REQUIRES the
+     statistical validation step below, not a single spot-check.
+
+Statistical validation demo (n=40 synthetic predicted-vs-true pairs):
+  n: 40
+  mae_cm: 0.744
+  rmse_cm: 0.894
+  mape_pct: 2.66
+  pearson_r: 0.9958
+  r_squared: 0.9916
+  pearson_p_value: 4.4960896812762794e-41
+  bland_altman_bias_cm: 0.414
+  bland_altman_loa_lower_cm: -1.159
+  bland_altman_loa_upper_cm: 1.988
+
+PASS: all pipeline stages executed and produced numeric output.

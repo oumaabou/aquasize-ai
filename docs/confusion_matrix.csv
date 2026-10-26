@@ -1,0 +1,8 @@
+,pred_Acanthuridae,pred_Carangidae,pred_Lutjanidae,pred_Scaridae,pred_Scombridae,pred_Serranidae,pred_Shark
+true_Acanthuridae,12,0,0,0,0,0,0
+true_Carangidae,0,7,0,1,1,0,0
+true_Lutjanidae,3,1,3,0,0,0,2
+true_Scaridae,1,0,0,6,0,0,0
+true_Scombridae,0,1,0,0,9,0,0
+true_Serranidae,2,1,0,1,0,6,0
+true_Shark,0,0,0,0,1,1,8

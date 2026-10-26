@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+runs/
+data/raw/
+data/processed/
+.ipynb_checkpoints/
