@@ -8,8 +8,6 @@ compression, background clutter); **Phase 2** (built on top of Phase 1)
 estimates real-world fish length from the same image and validates that
 estimate statistically against known measurements.
 
-Built to align with KAUST's Red Sea Research Center visiting-student
-project on monitoring coral reef fisheries and aquatic food systems.
 
 **Status: Phase 1 has been trained and evaluated on a real forked Roboflow
 dataset (not just scaffolded), on the full held-out test split.** After
