@@ -19,6 +19,10 @@ fixing an undertraining issue (100→300 epochs), the model reaches
 the weakest (Lutjanidae). Full per-class breakdown, confusion matrix, and
 what still needs work are in `docs/results.md`.
 
+**Live demo:** https://aquasize-ai-app.onrender.com/ (upload a reef fish
+photo and get the predicted family with a confidence score; hosted on
+Render, so the first load after idle time may take a few seconds).
+
 ## Why two phases
 
 Species identification is well-established and straightforward to
